@@ -82,15 +82,15 @@ void startShowIp(void *param){
 
 ///////////////////////////////////定时器区域///////////////////////////////////////
 Ticker tickerCheckTime;
-// NTP对时
-void checkTime(){
+// NTP对时定时触发回调
+void triggerCheckTime(){
   // 只要将对时标志置为true即可，在主循环中进行对时操作
   isCheckingTime = true;
 }
 
 void startTickerCheckTime(){
   // 每隔一段时间进行一次NTP对时
-  tickerCheckTime.attach(TIME_CHECK_INTERVAL, checkTime);
+  tickerCheckTime.attach(TIME_CHECK_INTERVAL, triggerCheckTime);
 }
 //////////////////////////////////////////////////////////////////////////////////////
 
