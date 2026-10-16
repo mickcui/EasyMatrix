@@ -52,14 +52,28 @@ void setup() {
         // 清屏
         clearMatrix();
       }
-      // 关闭wifi
-      disConnectWifi();
+      // 启动局域网常驻 Web 控制台服务器
+      startServer();
     }
   }
 }
 
 void loop() { 
+  doClient(); // 局域网常驻 Web 控制台与 OTA 请求监听
   watchBtn();
+
+  // 如果正在进行 OTA 固件更新，暂停屏幕绘制以保障闪存写入稳定性
+  if(isUpdating){
+    delay(10);
+    return;
+  }
+
+  // 弹幕跑马灯播放
+  if(isShowingMarquee){
+    drawMarqueeFrame();
+    return;
+  }
+
   if(brightModel == BRIGHT_MODEL_AUTO && ((millis() - prevSampling) >= 1000 || prevSampling > millis())){
     brightSamplingValue+=analogRead(LIGHT_ADC);
     brightSamplingTime++;

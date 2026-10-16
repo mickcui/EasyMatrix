@@ -994,3 +994,56 @@ uint16_t hsv2rgb(uint16_t hue, uint8_t saturation, uint8_t value){
   b = b * 255 / 100;
   return matrix.Color(r, g, b);
 }
+
+// 弹幕跑马灯相关
+bool isShowingMarquee = false;
+String marqueeMsg = "";
+int marqueeX = 32;
+int marqueeRepeats = 1;
+unsigned long prevMarqueeTime = 0;
+
+void startMarquee(String text, int repeats){
+  if(text.length() == 0) return;
+  marqueeMsg = text;
+  marqueeRepeats = repeats;
+  marqueeX = 32;
+  isShowingMarquee = true;
+  prevMarqueeTime = millis();
+}
+
+void drawMarqueeFrame(){
+  if(!isShowingMarquee) return;
+  if((millis() - prevMarqueeTime) < 45){ // 约22fps平滑步进
+    return;
+  }
+  prevMarqueeTime = millis();
+
+  matrix.fillScreen(0);
+  matrix.setFont(&MyFont);
+  matrix.setCursor(marqueeX, 6);
+  matrix.setTextColor(mainColor);
+  matrix.print(marqueeMsg);
+  matrix.setBrightness(brightness);
+  matrix.show();
+
+  marqueeX--;
+  int totalWidth = marqueeMsg.length() * 6;
+  if(marqueeX < -totalWidth){
+    marqueeRepeats--;
+    if(marqueeRepeats > 0){
+      marqueeX = 32;
+    }else{
+      isShowingMarquee = false;
+      clearMatrix();
+      if(currentPage == TIME){
+        drawTimeFirstTime = true;
+      }else if(currentPage == BRIGHT){
+        drawBright();
+      }else if(currentPage == ANIM){
+        lightedCount = 0;
+        memset(matrixArray,0,sizeof(matrixArray));
+      }
+    }
+  }
+}
+

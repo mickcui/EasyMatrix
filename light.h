@@ -36,6 +36,9 @@ void drawAnim();
 void drawRHYTHM();
 void calculateBrightnessValue();
 void clearBrightSampling();
+extern bool isShowingMarquee;
+void startMarquee(String text, int repeats = 1);
+void drawMarqueeFrame();
 
 #endif
 

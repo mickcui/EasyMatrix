@@ -3,6 +3,7 @@
 #include "common.h"
 
 void wifiConfigBySoftAP(void);
+void startServer(void);
 void doClient(void);
 void connectWiFi(int timeOut_s);
 void getNTPTime(void);
@@ -15,5 +16,6 @@ extern String pass;
 extern bool wifiConnected;
 extern bool apConfig;
 extern bool RTCSuccess;
+extern bool isUpdating;
 
 #endif

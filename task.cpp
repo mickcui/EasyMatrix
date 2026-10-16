@@ -120,6 +120,11 @@ void watchBtn(){
 // 按键方法
 // >按键
 void btn1click(){
+  if(isShowingMarquee){
+    isShowingMarquee = false;
+    clearMatrix();
+    return;
+  }
   switch(currentPage){
     case TIME:
       if(timePage == TIME_H_M_S){
@@ -184,6 +189,11 @@ void btn1click(){
 }
 // <按键
 void btn2click(){
+  if(isShowingMarquee){
+    isShowingMarquee = false;
+    clearMatrix();
+    return;
+  }
   switch(currentPage){
     case TIME:     
       if(timePage == TIME_H_M_S){
@@ -247,6 +257,11 @@ void btn2click(){
   }
 }
 void btn3click(){
+  if(isShowingMarquee){
+    isShowingMarquee = false;
+    clearMatrix();
+    return;
+  }
   switch(currentPage){
     case SETTING:
       // 关闭显示IP的动画任务
@@ -268,6 +283,7 @@ void btn3click(){
         // 如果连接上了wifi,就进行NTP对时,超过30秒对时失败，就进入节奏灯页面
         if(wifiConnected){
           checkTime(30);
+          startServer();
         }
       }
       break;
