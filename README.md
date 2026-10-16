@@ -73,7 +73,7 @@
 
 | 部件 | 推荐型号/规格 | 数量 | 备注 |
 | :--- | :--- | :--- | :--- |
-| **主控板** | ESP32 开发板 / ESP32-C3 核心板 | 1 | 推荐带 USB 转串口与外置天线或 PCB 天线板 |
+| **主控板** | ESP32 开发板 / AirM2M CORE ESP32-C3 核心板 | 1 | 本项目 ESP32-C3 在 Arduino IDE 中选择 `AirM2M_CORE_ESP32C3` |
 | **RGB 点阵屏** | WS2812B 8×32 柔性屏（4 个 8×8 级联） | 1 | 256 颗灯珠，GRB 顺序，单线归零码通信 |
 | **音频拾音器** | MAX9814 / 驻极体麦克风放大模块 | 1 | 模拟电压输出 (OUT) 接主控 ADC |
 | **光敏电阻模块** | 带有模拟量输出 (AO) 的光敏传感器模块 | 1 | 用于检测环境照度，实现自动调光 |
@@ -82,7 +82,7 @@
 
 ### 2. 引脚接线对照表
 
-> **提示**：源码引脚定义位于 `common.h`。若使用其他 ESP32 核心板型号，可在 `common.h` 中根据实际布线修改引脚编号。
+> **重要**：下表和 `common.h` 中的默认接线针对 **ESP32-C3**。经典 **ESP32-WROOM / ESP32 DevKit** 的 GPIO6～11 通常连接板载 Flash，不能用作屏幕 DIN 或按键；其 GPIO1、GPIO2 也不是此处所需的 ADC1 输入。使用其他型号时，必须根据该板引脚图重新分配 `common.h` 中的引脚，不能只修改 IDE 的 Board 选项。
 
 | 外设 / 功能模块 | 对应引脚 (GPIO) | 模式 / 信号特性 | 功能描述 |
 | :--- | :--- | :--- | :--- |
@@ -259,15 +259,15 @@ curl -X POST -d "text=WELCOME&repeat=2" "http://192.168.1.105/api/message"
 
 #### B. PlatformIO 配置参考 (`platformio.ini`)
 
-若使用 PlatformIO，可参考以下配置工程：
+若使用 PlatformIO，AirM2M CORE ESP32-C3 对应的 Board ID 为 `airm2m_core_esp32c3`，可参考以下配置：
 
 ```ini
-[env:esp32dev]
+[env:airm2m_core_esp32c3]
 platform = espressif32
-board = esp32dev
+board = airm2m_core_esp32c3
 framework = arduino
 monitor_speed = 115200
-board_build.flash_mode = qio
+board_build.flash_mode = dio
 board_build.partitions = default.csv
 lib_deps =
     adafruit/Adafruit GFX Library
@@ -281,11 +281,13 @@ lib_deps =
 ### 2. 核心烧录设置（重要避坑）
 
 在 Arduino IDE 菜单项中配置：
-1. **Board**：选择你的 ESP32 型号（例如 `ESP32 Dev Module` 或 `ESP32C3 Dev Module`）。
+1. **Board**：本项目 ESP32-C3 **必须选择 `AirM2M_CORE_ESP32C3`**，菜单路径为 **工具 → 开发板 → esp32 → AirM2M_CORE_ESP32C3**，**不要选择通用的 `ESP32C3 Dev Module`**。该板型预设使用 **DIO** Flash 模式；板型选错时，即使烧录成功，也可能出现屏幕不亮、搜不到 `EasyMatrix` 热点。若使用经典 ESP32，则选择实际对应板型，并先修改 `common.h` 的接线定义。
 2. **Flash Size**：`4MB (32Mb)`。
-3. **Partition Scheme**：`Default 4MB with spiffs` 或 `Minimal SPIFFS (Large APPS with OTA)`（推荐预留 OTA 分区）。
-4. **Erase All Flash Before Sketch Upload**：**务必选择 `Enable`（完全擦除 Flash）**！
-   - *原因*：首次烧录或大版本升级时，旧版残留的 NVS 结构可能导致变量读取异常；完全擦除后再行烧录，设备上电会自动以出厂默认状态进入配网模式。
+3. **Partition Scheme**：选择 `Default 4MB with spiffs (1.2MB APP/1.5MB SPIFFS)`，保留 OTA 分区；不要选择 `No OTA` 或 `Huge APP (No OTA)`。
+4. **Erase All Flash Before Sketch Upload**：**首次烧录或需要清除旧配置时选择 `Enabled`（完全擦除 Flash）**。
+   - *原因*：首次烧录或大版本升级时，旧版残留的 NVS 结构可能导致变量读取异常；完全擦除后再行烧录，设备上电会自动以出厂默认状态进入配网模式。此操作会清除 Wi-Fi 和显示设置，日常更新若需保留配置应选择 `Disabled`。
+5. **USB CDC On Boot（ESP32-C3 原生 USB 接口）**：选择 `Enabled`，才能通过该 USB 串口查看 `Serial` 启动日志。如果使用 CH340/CP210x 等 USB 转 UART 接口，则保持 `Disabled`，从 UART 串口查看日志。
+6. **烧录后复位**：烧录完成后松开 BOOT，按一次 EN/RESET 或重新上电，不要一直按住 BOOT。串口监视器波特率设为 **115200**。
 
 ---
 
@@ -309,6 +311,11 @@ EasyMatrix/
 ---
 
 ## ❓ 常见问题排查 (FAQ)
+
+### Q0: ESP32-C3 烧录成功，但屏幕不亮，也搜不到 `EasyMatrix` 热点？
+- **先检查开发板选项**：本项目 ESP32-C3 应选择 **`AirM2M_CORE_ESP32C3`**，不要选择 `ESP32C3 Dev Module`。修改 Board 后须**重新编译并烧录**，不能只修改菜单而继续使用旧固件。
+- 烧录完成后松开 BOOT，按一次 EN/RESET 或重新上电。首次启动应能搜到无密码的 **2.4GHz** 热点 `EasyMatrix`；若设备已配置并连上路由器，则使用串口打印的局域网 IP。
+- 若仍无响应，将串口监视器设为 **115200**，检查复位后的完整日志，并确认灯板使用独立的 5V 供电、与主控共地，数据线接 **DIN** 而不是 DOUT。
 
 ### Q1: 点阵屏部分灯珠乱闪、发白或者 ESP32 在开机时不断重启？
 - **A**：典型的供电不足或未共地引起。WS2812 8×32 阵列在亮度较高时瞬态电流极大。请务必使用独立的 5V 2A~3A 电源为灯板直接供电，并确认电源地（GND）与 ESP32 地线连接在一起。
